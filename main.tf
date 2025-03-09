@@ -56,7 +56,27 @@ resource "aws_security_group" "EC2_sg" {
         protocol = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
+
+    ingress {
+        from_port = 80
+        to_port = 80
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
   
+    tags = {
+        Name = "Webserver security group"
+    }
+  
+
+
 }
 
 resource "aws_eip" "elastic_ip" {
@@ -71,6 +91,16 @@ resource "aws_instance" "My_EC2" {
     instance_type = var.instance_type
     subnet_id = aws_subnet.public_subnet.id
     security_groups = [aws_security_group.EC2_sg.id]
+
+    user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y httpd
+              echo "<h1>Welcome to My Terraform Web Server</h1>" > /var/www/html/index.html
+              systemctl start httpd
+              systemctl enable httpd
+              EOF
+              
     tags = {
       name = "VPC_EC2"
     }
